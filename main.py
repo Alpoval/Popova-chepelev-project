@@ -44,8 +44,8 @@ class Car(BaseModel):
 
 
 
-@app.get("/cars")
-def cars(car: Car):
+@app.post("/cars")
+def cars_post(car: Car):
 
     id = randint(0, 999999)
 
@@ -64,6 +64,18 @@ def cars(car: Car):
             "message": "succesful"
         }
     )
+
+
+@app.get("/cars/{id}")
+def cars_get(id: int):
+
+    query = f"""
+    SELECT * FROM popova_chepelev.cars WHERE id = {id}
+    """
+    response = cur.execute(query)
+    print(response)
+
+    return response
 
 
 if __name__ == "__main__":
