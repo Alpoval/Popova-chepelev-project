@@ -19,3 +19,29 @@ conn = psycopg2.connect(
 
 cur = conn.cursor()
 print(" соединение с БД установлено")
+
+BASE_URL= 'http://0.0.0.0:8080'
+class Car(BaseModel):
+    model: str
+    year: int = Field(ge=1700)
+    color: str
+    type: str
+
+
+@pytest.fixture(autouse=True)
+def cleanup():
+    execute_query("DELETE FROM popova_chepelev.cars")
+    yield
+def test_post_car():
+    test_data= {
+        'model':" BMV X5",
+        'year': 2024,
+        'color': "red",
+        'type': 'crossover'
+    }
+    response=requests.post(f"{BASE_URL}cars",json=test_data)
+    assert response.status_code == 200
+
+    db_data = execute_query( "SELECT model,car_year,color,type FROM popova_chepelev.cars",fetch=True)
+
+
