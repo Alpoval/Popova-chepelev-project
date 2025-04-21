@@ -19,6 +19,13 @@ conn = psycopg2.connect(
 
 cur = conn.cursor()
 print(" соединение с БД установлено")
+with open("schema.sql", "r") as file:
+    sql_script = file.read()
+cur.execute(sql_script)
+conn.commit()
+
+
+
 
 BASE_URL= 'http://0.0.0.0:8080'
 class Car(BaseModel):
@@ -30,7 +37,7 @@ class Car(BaseModel):
 
 @pytest.fixture(autouse=True)
 def cleanup():
-    execute_query("DELETE FROM popova_chepelev.cars")
+    cur.execute("DELETE FROM popova_chepelev.cars")
     yield
 def test_post_car():
     test_data= {
@@ -42,7 +49,7 @@ def test_post_car():
     response=requests.post(f"{BASE_URL}cars",json=test_data)
     assert response.status_code == 200
 
-    db_data = execute_query( "SELECT model,car_year,color,type FROM popova_chepelev.cars",fetch=True)
+    db_data = cur.execute( "SELECT model,car_year,color,type FROM popova_chepelev.cars",fetch=True)
 
     assert len(db_data)==1
     assert db_data[0][0] == test_data ["model"]
