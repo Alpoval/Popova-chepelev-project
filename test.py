@@ -44,4 +44,7 @@ def test_post_car():
 
     db_data = execute_query( "SELECT model,car_year,color,type FROM popova_chepelev.cars",fetch=True)
 
+    assert len(db_data)==1
+    assert db_data[0][0] == test_data ["model"]
+
 
