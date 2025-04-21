@@ -1,14 +1,10 @@
 import psycopg2
-from psycopg2 import sql
-
 from random import randint
-from typing import Optional
-
 from pydantic import BaseModel, Field
-
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 import uvicorn
+
 
 host = '79.174.88.238'
 port = 15221
@@ -47,13 +43,13 @@ class Car(BaseModel):
 @app.post("/cars")
 def cars_post(car: Car):
 
-    id = randint(0, 999999)
+    car.id = randint(0, 999999)
 
     query = """
         INSERT INTO popova_chepelev.cars (id, model, car_year, color, type)
         VALUES (%s, %s, %s, %s, %s);
     """
-    values = (id, car.model, car.year, car.color, car.type)
+    values = (car.id, car.model, car.year, car.color, car.type)
 
     cur.execute(query, values)
     conn.commit()
@@ -66,17 +62,32 @@ def cars_post(car: Car):
     )
 
 
-@app.get("/cars/{id}")
-def cars_get(id: int):
+@app.get("/cars")
+def cars_get():
 
-    query = f"""
-    SELECT * FROM popova_chepelev.cars WHERE id = {id}
-    """
-    response = cur.execute(query)
-    print(response)
-
-    return response
-
+    cur.execute( "SELECT id, model, car_year, color, type FROM  popova_chepelev.cars ")
+    cars = cur.fetchall()
+    return [{
+        "id": car[0],
+        "model": car[1],
+        "year": car[2],
+        "color":car[3],
+        "type": car[4]
+        } for car in cars]
+@app.put("/cars/{car.id}")
+def cars_update(car_id: int, car:Car):
+    query="""UPDATE popova_chepelev.cars 
+                SET model =%s,car_year=%s,color=%s,type=%s
+                WHERE id=%s;"""
+    values=(car.model,car.year,car.color,car.type,car.id)
+    cur.execute(query,values)
+    conn.commit()
+    return {"message":"Updated"}
+@app.delete("/cars/{car.id}")
+def car_delete(car_id:int):
+    cur.execute("DELETE FROM popova_chepelev.cars WHERE id=%s",(car_id,))
+    conn.commit()
+    return {"message":"Deleted"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
