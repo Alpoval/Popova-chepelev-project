@@ -1,9 +1,11 @@
+from http.client import HTTPException
 import psycopg2
 from random import randint
 from pydantic import BaseModel, Field
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 import uvicorn
+
 
 
 host = '79.174.88.238'
@@ -76,17 +78,30 @@ def cars_get():
         } for car in cars]
 @app.put("/cars/{car.id}")
 def cars_update(car_id: int, car:Car):
+    cur.execute("SELECT id FROM popova_chepelev.cars WHERE id=%s", car_id,)
+
+    if not cur.fetchone():
+        raise HTTPException(status_code=404,detail="Car not found")
+
     query="""UPDATE popova_chepelev.cars 
                 SET model =%s,car_year=%s,color=%s,type=%s
                 WHERE id=%s;"""
     values=(car.model,car.year,car.color,car.type,car.id)
     cur.execute(query,values)
     conn.commit()
+
     return {"message":"Updated"}
 @app.delete("/cars/{car.id}")
 def car_delete(car_id:int):
-    cur.execute("DELETE FROM popova_chepelev.cars WHERE id=%s",(car_id,))
+    cur.execute("SELECT id FROM popova_chepelev.cars WHERE id=%s", car_id, )
+
+    if not cur.fetchone():
+        raise HTTPException(status_code=404,detail="Car not found")
+
+    cur.execute("DELETE FROM popova_chepelev.cars WHERE id=%s", car_id, )
+
     conn.commit()
+
     return {"message":"Deleted"}
 
 if __name__ == "__main__":
